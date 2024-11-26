@@ -1,0 +1,55 @@
+﻿@page "/"
+@using SignalRApp.Services
+@inject SignalRService SrService
+
+<PageTitle>Home</PageTitle>
+
+<h3>Send Event with Id</h3>
+
+<input type="number" @bind="Id" placeholder="Enter product number" />
+
+<button @onclick="OnSendId">Send Event Id</button>
+
+<p>@StatusMessage</p>
+
+<ul>
+    @foreach (var message in Messages)
+    {
+        <li>@message</li>
+    }
+</ul>
+
+@code {
+    private string Id;
+    private string StatusMessage;
+    private List<string> Messages = [];
+
+    protected override void OnInitialized()
+    {
+        SrService.OnMessageReceived += OnMessageReceived;
+    }
+    
+    private void OnMessageReceived(string message)
+    {
+        Messages.Add(message);
+        InvokeAsync(StateHasChanged);
+    }
+    
+    private async Task OnSendId()
+    {
+        try
+        {
+            await SrService.SendEvent(Id);
+            StatusMessage = $"Event with Id: {Id} sent to server.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
+        }
+    }
+    
+    public void Dispose()
+    {
+        SrService.OnMessageReceived -= OnMessageReceived;
+    }
+}
